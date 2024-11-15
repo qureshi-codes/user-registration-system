@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');  // For hashing passwords
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-// User Schema
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -16,27 +15,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  referralLink: {
+  referralCode: {
     type: String,
-    unique: true,
   },
   referredBy: {
-    type: String,
-    default: null,  // The referral link of the person who referred this user
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+}, { timestamps: true });
 
-// Password hashing middleware
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+// Hash password before saving the user
+userSchema.pre("save", async function(next) {
+  if (!this.isModified("password")) {
     return next();
   }
 
@@ -45,11 +35,11 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Create referral link method
-userSchema.methods.generateReferralLink = function () {
-  return `${process.env.BASE_URL}/register?ref=${this._id}`;
+// Compare passwords during login
+userSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;
