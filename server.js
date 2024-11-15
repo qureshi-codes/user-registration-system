@@ -1,24 +1,39 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const authRoutes = require("./routes/auth");
+const express = require('express');
+const mongoose = require('mongoose'); // MongoDB library
+const cors = require('cors');
+const bodyParser = require('body-parser');
+require('dotenv').config(); // To load environment variables from .env file
 
-dotenv.config();
+const authRoute = require('./routes/auth'); // Import the auth route
 
 const app = express();
 
 // Middleware
-app.use(express.json()); // to parse JSON data
-app.use(cors()); // Enable cross-origin resource sharing
+app.use(cors());
+app.use(bodyParser.json()); // Parse JSON bodies
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected..."))
-  .catch((err) => console.log("Error connecting to MongoDB:", err));
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('MongoDB connected...');
+    } catch (error) {
+        console.error('Error connecting to MongoDB:', error.message);
+        process.exit(1); // Exit the process with failure
+    }
+};
 
-// Routes
-app.use("/api/auth", authRoutes); // Register auth routes under /api/auth
+// Connect to the database
+connectDB();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+// Mount the auth route
+app.use('/api/auth', authRoute);
+
+// Start the server
+const PORT = process.env.PORT || 5000; // Use port from .env or default to 5000
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
